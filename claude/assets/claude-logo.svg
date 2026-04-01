@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Claude Companion logo">
+  <rect width="320" height="96" rx="20" fill="#FFF7ED" />
+  <rect x="16" y="16" width="64" height="64" rx="16" fill="#D97706" />
+  <path d="M34 48c0-8 6-14 14-14h14v8H48c-3 0-6 3-6 6s3 6 6 6h14v8H48c-8 0-14-6-14-14Z" fill="#fff" />
+  <text x="100" y="58" font-size="30" font-family="JetBrains Mono, monospace" fill="#7C2D12">Claude Companion</text>
+</svg>

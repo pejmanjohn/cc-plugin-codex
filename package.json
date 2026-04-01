@@ -1,0 +1,23 @@
+{
+  "name": "cc-plugin-codex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Codex-native Claude Companion plugin source repository.",
+  "license": "MIT",
+  "homepage": "https://github.com/pejmanjohn/cc-plugin-codex",
+  "repository": "https://github.com/pejmanjohn/cc-plugin-codex",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:claude": "vitest run src/claude"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

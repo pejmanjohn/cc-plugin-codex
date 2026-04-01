@@ -1,0 +1,33 @@
+{
+  "name": "claude-companion",
+  "version": "0.1.0",
+  "description": "Codex-native Claude Code review and delegation companion.",
+  "author": {
+    "name": "Pejman John",
+    "url": "https://github.com/pejmanjohn"
+  },
+  "homepage": "https://github.com/pejmanjohn/cc-plugin-codex",
+  "repository": "https://github.com/pejmanjohn/cc-plugin-codex",
+  "license": "MIT",
+  "keywords": ["codex", "claude", "review", "delegation"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude Companion",
+    "shortDescription": "Claude Code-backed reviews and delegated tasks from Codex.",
+    "longDescription": "Codex-native review, delegation, setup, and job management workflows powered by Claude Code, with honest reporting for unsupported stop-gate behavior.",
+    "developerName": "Pejman John",
+    "category": "Coding",
+    "capabilities": ["Interactive"],
+    "websiteURL": "https://github.com/pejmanjohn/cc-plugin-codex",
+    "privacyPolicyURL": "https://github.com/pejmanjohn/cc-plugin-codex/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/pejmanjohn/cc-plugin-codex/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Review my current diff with Claude.",
+      "Run an adversarial review against this branch.",
+      "Delegate a task to Claude Code."
+    ],
+    "brandColor": "#D97706",
+    "composerIcon": "./assets/claude-small.svg",
+    "logo": "./assets/claude-logo.svg"
+  }
+}
