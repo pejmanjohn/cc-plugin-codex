@@ -231,6 +231,7 @@ describe('plugin install contract', () => {
           pluginName: 'claude-companion',
           forceRemoteSync: false,
         });
+        const skills = await rpc.request('skills/list', { cwd: repoDir });
 
         expect(listed.marketplaces).toEqual(
           expect.arrayContaining([
@@ -243,6 +244,26 @@ describe('plugin install contract', () => {
         expect(readFileSync(configPath, 'utf8')).toContain(
           '[plugins."claude-companion@claude-contract-marketplace"]',
         );
+        expect(
+          Object.fromEntries(
+            skills.data[0].skills
+              .filter((skill: { name: string }) =>
+                skill.name.startsWith('claude-companion:'),
+              )
+              .map((skill: { name: string; interface?: { displayName?: string } }) => [
+                skill.name,
+                skill.interface?.displayName,
+              ]),
+          ),
+        ).toEqual({
+          'claude-companion:claude-adversarial-review': 'Adversarial Review',
+          'claude-companion:claude-cancel': 'Cancel',
+          'claude-companion:claude-rescue': 'Delegate',
+          'claude-companion:claude-result': 'Result',
+          'claude-companion:claude-review': 'Review',
+          'claude-companion:claude-setup': 'Setup',
+          'claude-companion:claude-status': 'Status',
+        });
       } finally {
         await closeWebSocket(ws);
         await stopServer(server);

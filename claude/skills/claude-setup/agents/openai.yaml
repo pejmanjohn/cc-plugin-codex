@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup"
+  short_description: "Check Claude Companion readiness and review-gate status"
+  default_prompt: "Use $claude-setup to check Claude Companion readiness and report any setup blockers."

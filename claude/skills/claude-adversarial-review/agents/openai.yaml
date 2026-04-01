@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adversarial Review"
+  short_description: "Run a skeptical review against the current diff or branch range"
+  default_prompt: "Use $claude-adversarial-review to run a skeptical Claude review against the current diff or branch range and summarize the highest-risk findings."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cancel"
+  short_description: "Cancel a running Claude Companion job"
+  default_prompt: "Use $claude-cancel to stop the specified Claude Companion job."

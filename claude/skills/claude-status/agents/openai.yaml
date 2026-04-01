@@ -1,0 +1,4 @@
+interface:
+  display_name: "Status"
+  short_description: "Show Claude Companion jobs for the current workspace"
+  default_prompt: "Use $claude-status to show Claude Companion jobs for the current workspace."

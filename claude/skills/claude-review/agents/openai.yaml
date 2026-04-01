@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "Review the current worktree or a base diff with Claude"
+  default_prompt: "Use $claude-review to review the current worktree or a chosen base diff with Claude and summarize actionable findings."

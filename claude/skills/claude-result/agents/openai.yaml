@@ -1,0 +1,4 @@
+interface:
+  display_name: "Result"
+  short_description: "Show the stored output for a Claude Companion job"
+  default_prompt: "Use $claude-result to show the stored output for the specified Claude Companion job."
