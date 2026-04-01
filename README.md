@@ -1,5 +1,8 @@
 # CC Plugin Codex
 
+<img width="2626" height="2212" alt="CleanShot 2026-04-01 at 12 20 56@2x" src="https://github.com/user-attachments/assets/f8b6eb0d-e54e-439f-9e30-6444daffdc69" />
+
+
 Use Claude from inside Codex for code reviews or to delegate tasks to Claude Code.
 
 This repository is the source for the Codex-native Claude Companion plugin bundle. It is meant to be a reverse port of [`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc): the original brings Codex into Claude Code, while this project brings Claude-backed review and delegation workflows into Codex.
