@@ -22,12 +22,13 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 ## Install
 
 ```bash
-git clone https://github.com/pejmanjohn/cc-plugin-codex.git
-cd cc-plugin-codex
+mkdir -p ~/.codex/plugins
+git clone https://github.com/pejmanjohn/cc-plugin-codex.git ~/.codex/plugins/cc-plugin-codex
+cd ~/.codex/plugins/cc-plugin-codex
 ./scripts/install.sh
 ```
 
-The installer uses Codex's official `plugin/install` backend against this repo's local marketplace file, so you do not need to edit any Codex marketplace configuration by hand.
+This keeps the source checkout under Codex's documented personal plugin directory convention while still using Codex's official `plugin/install` backend for the actual install.
 
 ## Verify
 
@@ -50,6 +51,7 @@ After install, you should see the bundled Claude Companion skills in Codex. The 
 ## Update
 
 ```bash
+cd ~/.codex/plugins/cc-plugin-codex
 git pull
 ./scripts/install.sh
 ```
@@ -57,6 +59,7 @@ git pull
 ## Uninstall
 
 ```bash
+cd ~/.codex/plugins/cc-plugin-codex
 ./scripts/uninstall.sh
 ```
 
