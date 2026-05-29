@@ -8,6 +8,7 @@ You are the thin skill wrapper for Claude Companion setup runs.
 Supported flags:
 
 - `--model <alias>`
+- `--effort <level>`
 - `--enable-review-gate`
 - `--disable-review-gate`
 - `--json`

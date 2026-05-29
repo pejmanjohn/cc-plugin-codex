@@ -13,7 +13,8 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 
 - `$claude-review` for a normal read-only Claude review from Codex
 - `$claude-adversarial-review` for a steerable challenge review
-- `$claude-rescue`, `$claude-status`, `$claude-result`, and `$claude-cancel` to delegate and manage longer-running Claude tasks
+- `$claude-delegate`, `$claude-status`, `$claude-result`, and `$claude-cancel` to delegate and manage longer-running Claude tasks
+- `$claude-rescue` as a backwards-compatible alias for `$claude-delegate`
 - `$claude-setup` to verify Claude Code readiness and report the current review-gate limitation honestly
 
 ## Requirements
@@ -76,9 +77,32 @@ Runs a normal read-only Claude review on your current work or against a base ref
 
 Runs a more skeptical review that questions implementation choices, tradeoffs, and failure modes.
 
-### `$claude-rescue`
+### `$claude-delegate`
 
 Delegates a foreground or background task to Claude and stores durable job state for follow-up.
+
+By default, delegation uses Claude Code model `opus` with effort `high`.
+
+```text
+$claude-delegate investigate the flaky checkout test
+```
+
+Override the model or effort level per task:
+
+```text
+$claude-delegate --model sonnet --effort medium investigate the flaky checkout test
+$claude-delegate --background --model opus --effort xhigh implement the retry fix
+```
+
+Persist new defaults with setup:
+
+```text
+$claude-setup --model opus --effort high
+```
+
+Claude Code currently accepts effort levels such as `low`, `medium`, `high`, `xhigh`, and `max`. Model values can be aliases such as `sonnet` or `opus`, or full Claude model names supported by your Claude Code installation.
+
+`$claude-rescue` remains available as a backwards-compatible alias.
 
 ### `$claude-status`, `$claude-result`, `$claude-cancel`
 

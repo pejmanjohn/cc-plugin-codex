@@ -25,4 +25,21 @@ describe('parseCommand', () => {
       trailingText: 'focus on race conditions',
     });
   });
+
+  it('parses delegate model and effort flags', async () => {
+    const { parseCommand } = await load();
+
+    expect(
+      parseCommand(['delegate', '--model', 'opus', '--effort', 'high', 'fix the worker']),
+    ).toEqual(
+      expect.objectContaining({
+        command: 'delegate',
+        flags: expect.objectContaining({
+          model: 'opus',
+          effort: 'high',
+        }),
+        trailingText: 'fix the worker',
+      }),
+    );
+  });
 });

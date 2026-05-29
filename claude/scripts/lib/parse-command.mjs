@@ -13,7 +13,7 @@ export function parseCommand(argv) {
 
   if (!command) {
     throw new Error(
-      'Missing command. Expected one of: setup, review, adversarial-review, rescue, status, result, cancel.',
+      'Missing command. Expected one of: setup, review, adversarial-review, delegate, rescue, status, result, cancel.',
     );
   }
 

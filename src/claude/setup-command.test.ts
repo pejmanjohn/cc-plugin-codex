@@ -84,7 +84,7 @@ describe('setup operation', () => {
     expect(result.message).toMatch(/(login|sign in|authenticate|non-JSON)/i);
   });
 
-  it('prints JSON from the real setup entrypoint and persists requested review gate state', async () => {
+  it('prints JSON from the real setup entrypoint and persists requested defaults plus review gate state', async () => {
     const fake = createFakeClaudeExecutable(
       'printf \'{"is_error":false,"result":"Claude Code usable","session_id":"session-456"}\'',
     );
@@ -93,7 +93,7 @@ describe('setup operation', () => {
     const entrypoint = join(process.cwd(), 'claude/scripts/claude-companion.mjs');
     const stdout = execFileSync(
       'node',
-      [entrypoint, 'setup', '--json', '--enable-review-gate'],
+      [entrypoint, 'setup', '--json', '--model', 'opus', '--effort', 'high', '--enable-review-gate'],
       {
         cwd: workspaceRoot,
         env: {
@@ -108,6 +108,9 @@ describe('setup operation', () => {
     const stored = JSON.parse(readFileSync(join(stateRoot, 'config.json'), 'utf8'));
 
     expect(result.reviewGate.desiredState).toBe('enabled');
+    expect(result.readiness.model).toBe('opus');
+    expect(stored.defaultModel).toBe('opus');
+    expect(stored.defaultEffort).toBe('high');
     expect(stored.reviewGate.desiredState).toBe('enabled');
     expect(result.output ?? result).toBeDefined();
   });

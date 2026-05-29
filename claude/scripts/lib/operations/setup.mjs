@@ -4,6 +4,9 @@ export async function runSetup(parsed, deps) {
   if (parsed.flags.model) {
     nextConfig.defaultModel = parsed.flags.model;
   }
+  if (parsed.flags.effort) {
+    nextConfig.defaultEffort = parsed.flags.effort;
+  }
   if (parsed.flags.enableReviewGate) {
     nextConfig.reviewGate.desiredState = 'enabled';
   }

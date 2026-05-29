@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 const skills = new Map([
   ['claude-review', 'review'],
   ['claude-adversarial-review', 'adversarial-review'],
+  ['claude-delegate', 'delegate'],
   ['claude-rescue', 'rescue'],
   ['claude-status', 'status'],
   ['claude-result', 'result'],

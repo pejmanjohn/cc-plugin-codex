@@ -6,14 +6,14 @@ import { join } from 'node:path';
 const load = () => import('../../claude/scripts/lib/runtime-config.mjs');
 
 describe('runtime config', () => {
-  it('defaults to sonnet and a blocked gate capability', async () => {
+  it('defaults to opus, high effort, and a blocked gate capability', async () => {
     const root = mkdtempSync(join(tmpdir(), 'claude-companion-config-'));
     const { loadRuntimeConfig } = await load();
 
     const config = await loadRuntimeConfig({ CLAUDE_COMPANION_STATE_ROOT: root });
 
-    expect(config.defaultModel).toBe('sonnet');
-    expect(config.defaultEffort).toBe('medium');
+    expect(config.defaultModel).toBe('opus');
+    expect(config.defaultEffort).toBe('high');
     expect(config.reviewGate.capability).toBe('blocked');
   });
 

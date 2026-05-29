@@ -1,4 +1,4 @@
 interface:
-  display_name: "Delegate"
-  short_description: "Delegate an implementation or investigation task to Claude Code"
-  default_prompt: "Use $claude-rescue to delegate this task to Claude Code and report the result or background job status."
+  display_name: "Rescue"
+  short_description: "Legacy alias for delegating a task to Claude Code"
+  default_prompt: "Use $claude-delegate for new delegation tasks; $claude-rescue remains available as a compatibility alias."

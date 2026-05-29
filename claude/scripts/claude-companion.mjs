@@ -116,6 +116,7 @@ async function main(argv = process.argv.slice(2)) {
     case 'adversarial-review':
       result = await runReview(parsed, deps);
       break;
+    case 'delegate':
     case 'rescue':
       result = await runRescue(parsed, deps);
       break;

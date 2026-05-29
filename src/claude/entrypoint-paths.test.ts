@@ -72,13 +72,13 @@ describe('entrypoint asset paths', () => {
     expect(stdout).toContain('Claude review found no actionable issues.');
   });
 
-  it('runs rescue from an arbitrary workspace while reading the installed bundled rescue prompt', () => {
+  it('runs delegate from an arbitrary workspace while reading the installed bundled prompt', () => {
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'claude-entrypoint-workspace-'));
     const stateRoot = mkdtempSync(join(tmpdir(), 'claude-entrypoint-state-'));
-    const fake = createFakeClaudeExecutable('rescue finished');
+    const fake = createFakeClaudeExecutable('delegate finished');
     const entrypoint = join(createInstalledPluginBundle(), 'scripts/claude-companion.mjs');
 
-    const stdout = execFileSync('node', [entrypoint, 'rescue', 'investigate path handling'], {
+    const stdout = execFileSync('node', [entrypoint, 'delegate', 'investigate path handling'], {
       cwd: workspaceRoot,
       env: {
         ...fake.env,
@@ -87,6 +87,6 @@ describe('entrypoint asset paths', () => {
       encoding: 'utf8',
     });
 
-    expect(stdout).toContain('rescue finished');
+    expect(stdout).toContain('delegate finished');
   });
 });

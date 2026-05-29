@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -26,6 +26,38 @@ function createFakeClaudeExecutable(body: string) {
 }
 
 describe('rescue operation', () => {
+  it('defaults delegate core runs to opus with high effort', async () => {
+    const { runRescueCore } = await loadRescue();
+    const argsFile = join(mkdtempSync(join(tmpdir(), 'claude-args-')), 'args.txt');
+    const fake = createFakeClaudeExecutable([
+      'printf "%s\\n" "$@" > "$CLAUDE_ARGS_FILE"',
+      'printf \'{"is_error":false,"result":"delegated","session_id":"session-defaults"}\'',
+    ].join('\n'));
+
+    await runRescueCore(
+      {
+        command: 'delegate',
+        flags: {
+          background: false,
+          resume: false,
+          fresh: false,
+          model: undefined,
+          effort: undefined,
+        },
+        trailingText: 'check defaults',
+      },
+      null,
+      {
+        ...fake.env,
+        CLAUDE_ARGS_FILE: argsFile,
+      },
+    );
+
+    const args = readFileSync(argsFile, 'utf8').trim().split('\n');
+    expect(args[args.indexOf('--model') + 1]).toBe('opus');
+    expect(args[args.indexOf('--effort') + 1]).toBe('high');
+  });
+
   it('streams Claude stdout and stderr chunks while still aggregating the final result', async () => {
     const { runClaudeJson } = await loadClaudeProcess();
     const fake = createFakeClaudeExecutable([
@@ -94,19 +126,64 @@ describe('rescue operation', () => {
     expect(result.output).toContain(job.id);
   });
 
-  it('reuses the latest rescue session when --resume is set', async () => {
+  it('stores new delegate jobs under the delegate kind', async () => {
+    const { runRescue } = await loadRescue();
+    const createJob = vi.fn(async (_root, _workspaceRoot, job) => ({ id: 'job-1', ...job }));
+    const runRescueCore = vi.fn(async () => ({
+      sessionId: 'session-delegate',
+      rawOutput: 'Delegated',
+      parsedPayload: { summary: 'Delegated' },
+      renderedOutput: 'Delegated',
+    }));
+
+    const result = await runRescue(
+      {
+        command: 'delegate',
+        flags: {
+          background: false,
+          resume: false,
+          fresh: false,
+          model: undefined,
+          effort: undefined,
+        },
+        trailingText: 'investigate default naming',
+      },
+      {
+        stateRoot: '/state',
+        workspaceRoot: '/repo/example',
+        config: { defaultModel: 'opus', defaultEffort: 'high' },
+        createJob,
+        updateJob: vi.fn(async (_root, _workspaceRoot, _jobId, patch) => ({ id: 'job-1', ...patch })),
+        listJobs: vi.fn(async () => []),
+        runRescueCore,
+      },
+    );
+
+    expect(createJob).toHaveBeenCalledWith(
+      '/state',
+      '/repo/example',
+      expect.objectContaining({
+        kind: 'delegate',
+        title: 'Claude delegate',
+      }),
+    );
+    expect(result.output).toContain('Delegated');
+  });
+
+  it('reuses the latest delegate or legacy rescue session when --resume is set', async () => {
     const { selectRescueSession } = await loadRescue();
 
     const session = selectRescueSession(
       [
         { id: 'job-1', kind: 'review', sessionId: 'review-1', createdAt: '2026-03-31T21:00:00.000Z' },
         { id: 'job-7', kind: 'rescue', sessionId: 'session-7', createdAt: '2026-03-31T23:00:00.000Z' },
+        { id: 'job-8', kind: 'delegate', sessionId: 'session-8', createdAt: '2026-03-31T23:30:00.000Z' },
         { id: 'job-3', kind: 'rescue', sessionId: 'session-3', createdAt: '2026-03-31T22:00:00.000Z' },
       ],
       { resume: true, fresh: false },
     );
 
-    expect(session).toBe('session-7');
+    expect(session).toBe('session-8');
   });
 
   it('surfaces a concise resume hint when a prior rescue session exists and no routing flag is passed', async () => {

@@ -8,14 +8,16 @@ describe('release positioning', () => {
     const readme = readFileSync('claude/README.md', 'utf8');
     expect(readme).toContain('not fully functionally equivalent to `openai/codex-plugin-cc` today');
     expect(readme).toContain(
-      'Review, adversarial review, rescue delegation, setup, status, result, and cancel are the currently ported and working workflows.',
+      'Review, adversarial review, delegation, setup, status, result, and cancel are the currently ported and working workflows.',
     );
+    expect(readme).toContain('Delegation defaults to Claude Code model `opus` with effort `high`.');
     expect(readme).toContain(
       'The automatic stop-time review gate is currently unavailable/blocked in the Codex plugin runtime.',
     );
 
     const setupSkill = readFileSync('claude/skills/claude-setup/SKILL.md', 'utf8');
     expect(setupSkill).toContain('--model <alias>');
+    expect(setupSkill).toContain('--effort <level>');
     expect(setupSkill).toContain('--enable-review-gate');
     expect(setupSkill).toContain('--disable-review-gate');
     expect(setupSkill).toContain('--json');

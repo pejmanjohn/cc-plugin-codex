@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { parseClaudeEnvelope, runClaudeJson } from '../claude-process.mjs';
 import { getJobLogFilePath, readJob, updateJob } from '../jobs-store.mjs';
 import { pluginPath } from '../plugin-paths.mjs';
+import { DEFAULT_EFFORT, DEFAULT_MODEL } from '../runtime-config.mjs';
 
 function serializeError(error) {
   if (error instanceof Error) {
@@ -18,9 +19,15 @@ function serializeError(error) {
   };
 }
 
+function isDelegationJob(job) {
+  return (job.kind === 'delegate' || job.kind === 'rescue') &&
+    typeof job.sessionId === 'string' &&
+    job.sessionId.length > 0;
+}
+
 function latestRescueJob(jobs) {
   return [...jobs]
-    .filter((job) => job.kind === 'rescue' && typeof job.sessionId === 'string' && job.sessionId.length > 0)
+    .filter(isDelegationJob)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
 
@@ -41,7 +48,7 @@ export function buildResumeHint(jobs, flags) {
     return null;
   }
 
-  return 'Hint: rerun with --resume to continue the latest rescue thread, or --fresh to start a new one.';
+  return 'Hint: rerun with --resume to continue the latest delegate thread, or --fresh to start a new one.';
 }
 
 function normalizeRescueRuntime(runtimeOrEnv = process.env) {
@@ -69,9 +76,9 @@ export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.en
   const prompt = await readFile(pluginPath('prompts', 'rescue-system.md'), 'utf8');
   const args = [
     '--model',
-    parsed.flags.model ?? 'sonnet',
+    parsed.flags.model ?? DEFAULT_MODEL,
     '--effort',
-    parsed.flags.effort ?? 'medium',
+    parsed.flags.effort ?? DEFAULT_EFFORT,
   ];
 
   if (sessionId) {
@@ -89,11 +96,11 @@ export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.en
   );
 
   if (commandResult.error) {
-    throw new Error(`Claude rescue could not be started: ${commandResult.error.message}`);
+    throw new Error(`Claude delegation could not be started: ${commandResult.error.message}`);
   }
 
   if (commandResult.stdout.trim() === '') {
-    throw new Error(commandResult.stderr.trim() || 'Claude rescue returned no JSON output.');
+    throw new Error(commandResult.stderr.trim() || 'Claude delegation returned no JSON output.');
   }
 
   const envelope = parseClaudeEnvelope(commandResult.stdout);
@@ -113,10 +120,11 @@ export async function runRescue(parsed, deps) {
   const jobs = await deps.listJobs(deps.stateRoot, deps.workspaceRoot);
   const sessionId = selectRescueSession(jobs, parsed.flags);
   const resumeHint = buildResumeHint(jobs, parsed.flags);
+  const jobKind = parsed.command === 'rescue' ? 'rescue' : 'delegate';
   const job = await deps.createJob(deps.stateRoot, deps.workspaceRoot, {
-    kind: 'rescue',
-    title: 'Claude rescue',
-    summary: parsed.trailingText || 'Delegated rescue task',
+    kind: jobKind,
+    title: 'Claude delegate',
+    summary: parsed.trailingText || 'Delegated task',
     status: parsed.flags.background ? 'queued' : 'running',
     phase: parsed.flags.background ? 'queued' : 'running',
     sessionId,
@@ -140,8 +148,8 @@ export async function runRescue(parsed, deps) {
       return {
         job: updated,
         output: resumeHint
-          ? `Started background rescue job ${updated.id}. Use $claude-status or $claude-result --job ${updated.id}.\n\n${resumeHint}`
-          : `Started background rescue job ${updated.id}. Use $claude-status or $claude-result --job ${updated.id}.`,
+          ? `Started background delegate job ${updated.id}. Use $claude-status or $claude-result --job ${updated.id}.\n\n${resumeHint}`
+          : `Started background delegate job ${updated.id}. Use $claude-status or $claude-result --job ${updated.id}.`,
       };
     } catch (error) {
       await deps.updateJob(deps.stateRoot, deps.workspaceRoot, job.id, {
@@ -210,7 +218,7 @@ export async function runBackgroundJob(options) {
     );
   };
 
-  logLine(`Starting background rescue job ${storedJob.id}.`);
+  logLine(`Starting background delegate job ${storedJob.id}.`);
   await queueUpdate({
     status: 'running',
     phase: 'running',
@@ -218,7 +226,7 @@ export async function runBackgroundJob(options) {
 
   try {
     const rescueArgs = {
-      command: 'rescue',
+      command: storedJob.kind === 'rescue' ? 'rescue' : 'delegate',
       flags: {
         background: false,
         resume: Boolean(storedJob.sessionId),
@@ -226,7 +234,7 @@ export async function runBackgroundJob(options) {
         model: options.config.defaultModel,
         effort: options.config.defaultEffort,
       },
-      trailingText: storedJob.summary ?? 'Delegated rescue task',
+      trailingText: storedJob.summary ?? 'Delegated task',
     };
     const runCore = options.runRescueCore ?? runRescueCore;
     const result = await runCore(rescueArgs, storedJob.sessionId ?? null, {
@@ -254,7 +262,7 @@ export async function runBackgroundJob(options) {
       pid: null,
       error: serializeError(error),
     });
-    logLine(`Background rescue failed: ${error instanceof Error ? error.message : String(error)}`);
+    logLine(`Background delegate failed: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }

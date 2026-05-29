@@ -2,9 +2,12 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
+export const DEFAULT_MODEL = 'opus';
+export const DEFAULT_EFFORT = 'high';
+
 const DEFAULT_CONFIG = {
-  defaultModel: 'sonnet',
-  defaultEffort: 'medium',
+  defaultModel: DEFAULT_MODEL,
+  defaultEffort: DEFAULT_EFFORT,
   fallbackModel: undefined,
   reviewGate: {
     desiredState: 'disabled',
