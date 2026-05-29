@@ -23,6 +23,8 @@ From the repo root:
 ./scripts/install.sh
 ```
 
+The repo installer uses Codex's personal marketplace pattern: it exposes this bundle at `~/plugins/claude-companion`, creates or updates `~/.agents/plugins/marketplace.json`, and installs with `codex plugin add claude-companion@<personal-marketplace-name>`.
+
 ## Expected workflow
 
 1. Install the plugin with `./scripts/install.sh`.

@@ -41,6 +41,9 @@ describe('repository publishability', () => {
     expect(rootReadme).toContain('cd ~/.codex/plugins/cc-plugin-codex');
     expect(rootReadme).toContain('./scripts/install.sh');
     expect(rootReadme).toContain('./scripts/uninstall.sh');
+    expect(rootReadme).toContain('~/.agents/plugins/marketplace.json');
+    expect(rootReadme).toContain('~/plugins/claude-companion');
+    expect(rootReadme).toContain('codex plugin add claude-companion@<personal-marketplace-name>');
     expect(rootReadme).toContain('$claude-setup');
     expect(rootReadme).toContain('claude/README.md');
 

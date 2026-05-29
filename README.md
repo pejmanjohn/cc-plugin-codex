@@ -21,7 +21,7 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 
 - Codex with plugin support
 - Claude Code installed and available as `claude`
-- Node.js 18.18 or later for development and tests
+- Node.js 18.18 or later for install, development, and tests
 
 ## Install
 
@@ -32,7 +32,13 @@ cd ~/.codex/plugins/cc-plugin-codex
 ./scripts/install.sh
 ```
 
-This keeps the source checkout under Codex's documented personal plugin directory convention while still using Codex's official `plugin/install` backend for the actual install.
+The installer follows Codex's personal marketplace convention used by `plugin-creator`:
+
+- creates or updates `~/.agents/plugins/marketplace.json`
+- exposes this repo's installable `claude/` bundle at `~/plugins/claude-companion`
+- runs `codex plugin add claude-companion@<personal-marketplace-name>`
+
+No machine-specific paths are committed to the repo. The `~/plugins/claude-companion` path is a local symlink to the checkout's `claude/` bundle, so updates still come from `git pull`.
 
 ## Verify
 
@@ -60,12 +66,16 @@ git pull
 ./scripts/install.sh
 ```
 
+Start a new Codex thread after reinstalling so the updated skills are loaded.
+
 ## Uninstall
 
 ```bash
 cd ~/.codex/plugins/cc-plugin-codex
 ./scripts/uninstall.sh
 ```
+
+Uninstall removes the installed plugin from Codex but leaves the personal marketplace entry in place so reinstalling stays one command.
 
 ## Usage
 
