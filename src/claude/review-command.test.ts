@@ -108,6 +108,9 @@ describe('review operations', () => {
 
   it('selects the adversarial prompt for adversarial review', async () => {
     const { pickReviewPrompt } = await load();
-    expect(pickReviewPrompt('adversarial-review')).toBe('claude/prompts/adversarial-system.md');
+    expect(pickReviewPrompt('adversarial-review')).toMatch(
+      /prompts\/adversarial-system\.md$/,
+    );
+    expect(pickReviewPrompt('review')).toMatch(/prompts\/review-system\.md$/);
   });
 });

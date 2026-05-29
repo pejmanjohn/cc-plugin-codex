@@ -89,11 +89,13 @@ describe('setup operation', () => {
       'printf \'{"is_error":false,"result":"Claude Code usable","session_id":"session-456"}\'',
     );
     const stateRoot = mkdtempSync(join(tmpdir(), 'claude-setup-state-'));
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'claude-setup-workspace-'));
     const entrypoint = join(process.cwd(), 'claude/scripts/claude-companion.mjs');
     const stdout = execFileSync(
       'node',
       [entrypoint, 'setup', '--json', '--enable-review-gate'],
       {
+        cwd: workspaceRoot,
         env: {
           ...fake.env,
           CLAUDE_COMPANION_STATE_ROOT: stateRoot,

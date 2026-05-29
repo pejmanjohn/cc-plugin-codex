@@ -2,6 +2,7 @@ import process from 'node:process';
 import { readFile } from 'node:fs/promises';
 import { parseClaudeEnvelope, runClaudeJson } from '../claude-process.mjs';
 import { getJobLogFilePath, readJob, updateJob } from '../jobs-store.mjs';
+import { pluginPath } from '../plugin-paths.mjs';
 
 function serializeError(error) {
   if (error instanceof Error) {
@@ -65,7 +66,7 @@ function normalizeRescueRuntime(runtimeOrEnv = process.env) {
 
 export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.env) {
   const runtime = normalizeRescueRuntime(runtimeOrEnv);
-  const prompt = await readFile('claude/prompts/rescue-system.md', 'utf8');
+  const prompt = await readFile(pluginPath('prompts', 'rescue-system.md'), 'utf8');
   const args = [
     '--model',
     parsed.flags.model ?? 'sonnet',

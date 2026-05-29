@@ -3,7 +3,7 @@ import { cwd } from 'node:process';
 import { closeSync, openSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseCommand } from './lib/parse-command.mjs';
 import { loadRuntimeConfig, saveRuntimeConfig, getStateRoot } from './lib/runtime-config.mjs';
 import { probeClaude, runClaudeJson, parseClaudeEnvelope } from './lib/claude-process.mjs';
@@ -15,13 +15,14 @@ import { createJob, listJobs, updateJob } from './lib/jobs-store.mjs';
 import { resolveReviewTarget } from './lib/git-review-target.mjs';
 import { buildReviewContext } from './lib/review-context.mjs';
 import { renderReviewOutput } from './lib/render-output.mjs';
+import { pluginPath, scriptsDir } from './lib/plugin-paths.mjs';
 
 function printLine(value) {
   process.stdout.write(value.endsWith('\n') ? value : `${value}\n`);
 }
 
 async function runClaudeReview({ prompt, context, model }) {
-  const schema = await readFile('claude/schemas/review-findings.schema.json', 'utf8');
+  const schema = await readFile(pluginPath('schemas', 'review-findings.schema.json'), 'utf8');
   const commandResult = await runClaudeJson(`${prompt}\n\n${context}`, ['--model', model, '--json-schema', schema], process.env);
   const envelope = parseClaudeEnvelope(commandResult.stdout);
   if (envelope.isError) {
@@ -37,7 +38,7 @@ async function spawnBackgroundWorker(jobId, parsed, logFilePath) {
   await mkdir(dirname(logFilePath), { recursive: true });
   const logFile = openSync(logFilePath, 'a');
   try {
-    const args = ['claude/scripts/run-background-job.mjs', jobId];
+    const args = [join(scriptsDir, 'run-background-job.mjs'), jobId];
 
     if (parsed.flags.model) {
       args.push('--model', parsed.flags.model);

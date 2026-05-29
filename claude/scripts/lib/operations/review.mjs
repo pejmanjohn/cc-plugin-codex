@@ -1,9 +1,10 @@
 import { readFile } from 'node:fs/promises';
+import { pluginPath } from '../plugin-paths.mjs';
 
 export function pickReviewPrompt(command) {
   return command === 'adversarial-review'
-    ? 'claude/prompts/adversarial-system.md'
-    : 'claude/prompts/review-system.md';
+    ? pluginPath('prompts', 'adversarial-system.md')
+    : pluginPath('prompts', 'review-system.md');
 }
 
 function serializeError(error) {
