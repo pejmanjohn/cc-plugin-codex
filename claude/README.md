@@ -17,6 +17,8 @@ This plugin is not fully functionally equivalent to `openai/codex-plugin-cc` tod
 
 ## Install
 
+Requires the `codex` CLI to be available on `PATH`.
+
 From the repo root:
 
 ```bash

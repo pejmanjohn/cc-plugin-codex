@@ -19,7 +19,7 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 
 ## Requirements
 
-- Codex with plugin support
+- Codex with plugin support and the `codex` CLI available on `PATH`
 - Claude Code installed and available as `claude`
 - Node.js 18.18 or later for install, development, and tests
 
