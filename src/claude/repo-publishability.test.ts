@@ -15,9 +15,6 @@ describe('repository publishability', () => {
       '.agents/plugins/marketplace.json',
       '.github/workflows/pull-request-ci.yml',
       '.github/workflows/release.yml',
-      'scripts/install.sh',
-      'scripts/uninstall.sh',
-      'scripts/lib/plugin-installer.mjs',
     ];
 
     for (const path of requiredFiles) {
@@ -36,15 +33,15 @@ describe('repository publishability', () => {
     expect(rootReadme).toContain('Claude Code');
     expect(rootReadme).not.toContain('local Claude CLI');
     expect(rootReadme).not.toContain('delegate rescue work');
-    expect(rootReadme).toContain('git clone https://github.com/pejmanjohn/cc-plugin-codex.git');
-    expect(rootReadme).toContain('cd cc-plugin-codex');
-    expect(rootReadme).toContain('You can clone the repo wherever you keep source checkouts.');
+    expect(rootReadme).toContain('codex plugin marketplace add pejmanjohn/cc-plugin-codex');
+    expect(rootReadme).toContain('codex plugin add claude-companion@cc-plugin-codex-marketplace');
+    expect(rootReadme).toContain('codex plugin marketplace upgrade cc-plugin-codex-marketplace');
+    expect(rootReadme).toContain('codex plugin remove claude-companion@cc-plugin-codex-marketplace');
+    expect(rootReadme).toContain('codex plugin marketplace remove cc-plugin-codex-marketplace');
+    expect(rootReadme).toContain('No repo-local installer or machine-specific paths are required.');
     expect(rootReadme).not.toContain('mkdir -p ~/.codex/plugins');
-    expect(rootReadme).toContain('./scripts/install.sh');
-    expect(rootReadme).toContain('./scripts/uninstall.sh');
-    expect(rootReadme).toContain('~/.agents/plugins/marketplace.json');
-    expect(rootReadme).toContain('~/plugins/claude-companion');
-    expect(rootReadme).toContain('codex plugin add claude-companion@<personal-marketplace-name>');
+    expect(rootReadme).not.toContain('./scripts/install.sh');
+    expect(rootReadme).not.toContain('./scripts/uninstall.sh');
     expect(rootReadme).toContain('$claude-setup');
     expect(rootReadme).toContain('claude/README.md');
 

@@ -21,23 +21,16 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 
 - Codex with plugin support and the `codex` CLI available on `PATH`
 - Claude Code installed and available as `claude`
-- Node.js 18.18 or later for install, development, and tests
+- Node.js 18.18 or later available as `node`
 
 ## Install
 
 ```bash
-git clone https://github.com/pejmanjohn/cc-plugin-codex.git
-cd cc-plugin-codex
-./scripts/install.sh
+codex plugin marketplace add pejmanjohn/cc-plugin-codex
+codex plugin add claude-companion@cc-plugin-codex-marketplace
 ```
 
-The installer follows Codex's personal marketplace convention used by `plugin-creator`:
-
-- creates or updates `~/.agents/plugins/marketplace.json`
-- exposes this repo's installable `claude/` bundle at `~/plugins/claude-companion`
-- runs `codex plugin add claude-companion@<personal-marketplace-name>`
-
-You can clone the repo wherever you keep source checkouts. No machine-specific paths are committed to the repo. The `~/plugins/claude-companion` path is a local symlink to the checkout's `claude/` bundle, so updates still come from `git pull`.
+This uses Codex's normal plugin marketplace flow directly from GitHub. No repo-local installer or machine-specific paths are required.
 
 ## Verify
 
@@ -60,9 +53,8 @@ After install, you should see the bundled Claude Companion skills in Codex. The 
 ## Update
 
 ```bash
-cd /path/to/cc-plugin-codex
-git pull
-./scripts/install.sh
+codex plugin marketplace upgrade cc-plugin-codex-marketplace
+codex plugin add claude-companion@cc-plugin-codex-marketplace
 ```
 
 Start a new Codex thread after reinstalling so the updated skills are loaded.
@@ -70,11 +62,11 @@ Start a new Codex thread after reinstalling so the updated skills are loaded.
 ## Uninstall
 
 ```bash
-cd /path/to/cc-plugin-codex
-./scripts/uninstall.sh
+codex plugin remove claude-companion@cc-plugin-codex-marketplace
+codex plugin marketplace remove cc-plugin-codex-marketplace
 ```
 
-Uninstall removes the installed plugin from Codex but leaves the personal marketplace entry in place so reinstalling stays one command.
+The first command removes the installed plugin. The second removes the GitHub marketplace source from Codex.
 
 ## Usage
 
@@ -148,3 +140,10 @@ Helpful files:
 
 - [`claude/README.md`](./claude/README.md)
 - [`claude/.codex-plugin/plugin.json`](./claude/.codex-plugin/plugin.json)
+
+For local development, add this checkout as a local marketplace instead of using the GitHub source:
+
+```bash
+codex plugin marketplace add /path/to/cc-plugin-codex
+codex plugin add claude-companion@cc-plugin-codex-marketplace
+```

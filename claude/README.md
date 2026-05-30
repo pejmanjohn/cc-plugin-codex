@@ -19,17 +19,16 @@ This plugin is not fully functionally equivalent to `openai/codex-plugin-cc` tod
 
 Requires the `codex` CLI to be available on `PATH`.
 
-From the repo root:
-
 ```bash
-./scripts/install.sh
+codex plugin marketplace add pejmanjohn/cc-plugin-codex
+codex plugin add claude-companion@cc-plugin-codex-marketplace
 ```
 
-The repo installer uses Codex's personal marketplace pattern: it exposes this bundle at `~/plugins/claude-companion`, creates or updates `~/.agents/plugins/marketplace.json`, and installs with `codex plugin add claude-companion@<personal-marketplace-name>`.
+This installs from the repository's GitHub marketplace source using Codex's standard plugin CLI.
 
 ## Expected workflow
 
-1. Install the plugin with `./scripts/install.sh`.
+1. Install the plugin with the `codex plugin marketplace add` and `codex plugin add` commands above.
 2. Run `$claude-setup` to verify Claude Code is present and usable.
 3. Use `$claude-review` or `$claude-adversarial-review` for read-only code review.
 4. Use `$claude-delegate` for foreground or background delegated tasks.
