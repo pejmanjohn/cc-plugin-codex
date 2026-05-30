@@ -1,6 +1,6 @@
 {
   "name": "claude-companion",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Codex-native Claude Code review and delegation companion.",
   "author": {
     "name": "Pejman Pour-Moezzi",
