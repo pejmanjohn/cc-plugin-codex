@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "Codex-native Claude Code review and delegation companion.",
   "author": {
-    "name": "Pejman John",
+    "name": "Pejman Pour-Moezzi",
     "url": "https://github.com/pejmanjohn"
   },
   "homepage": "https://github.com/pejmanjohn/cc-plugin-codex",
@@ -15,7 +15,7 @@
     "displayName": "Claude Companion",
     "shortDescription": "Claude Code-backed reviews and delegated tasks from Codex.",
     "longDescription": "Codex-native review, delegation, setup, and job management workflows powered by Claude Code, with honest reporting for unsupported stop-gate behavior.",
-    "developerName": "Pejman John",
+    "developerName": "Pejman Pour-Moezzi",
     "category": "Coding",
     "capabilities": ["Interactive"],
     "websiteURL": "https://github.com/pejmanjohn/cc-plugin-codex",

@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Claude Companion icon">
-  <rect width="64" height="64" rx="16" fill="#D97706" />
-  <path d="M18 32c0-8 6-14 14-14h14v8H32c-3 0-6 3-6 6s3 6 6 6h14v8H32c-8 0-14-6-14-14Z" fill="#fff" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Claude Companion mark">
+  <g fill="none" stroke="#D97706" stroke-width="7.5" stroke-linecap="round">
+    <path d="M32 7v13" />
+    <path d="M32 44v13" />
+    <path d="M7 32h13" />
+    <path d="M44 32h13" />
+    <path d="M14.3 14.3l9.2 9.2" />
+    <path d="M40.5 40.5l9.2 9.2" />
+    <path d="M49.7 14.3l-9.2 9.2" />
+    <path d="M23.5 40.5l-9.2 9.2" />
+  </g>
+  <circle cx="32" cy="32" r="8" fill="#D97706" />
 </svg>
