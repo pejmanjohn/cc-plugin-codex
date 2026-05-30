@@ -36,9 +36,10 @@ describe('repository publishability', () => {
     expect(rootReadme).toContain('Claude Code');
     expect(rootReadme).not.toContain('local Claude CLI');
     expect(rootReadme).not.toContain('delegate rescue work');
-    expect(rootReadme).toContain('mkdir -p ~/.codex/plugins');
-    expect(rootReadme).toContain('git clone https://github.com/pejmanjohn/cc-plugin-codex.git ~/.codex/plugins/cc-plugin-codex');
-    expect(rootReadme).toContain('cd ~/.codex/plugins/cc-plugin-codex');
+    expect(rootReadme).toContain('git clone https://github.com/pejmanjohn/cc-plugin-codex.git');
+    expect(rootReadme).toContain('cd cc-plugin-codex');
+    expect(rootReadme).toContain('You can clone the repo wherever you keep source checkouts.');
+    expect(rootReadme).not.toContain('mkdir -p ~/.codex/plugins');
     expect(rootReadme).toContain('./scripts/install.sh');
     expect(rootReadme).toContain('./scripts/uninstall.sh');
     expect(rootReadme).toContain('~/.agents/plugins/marketplace.json');

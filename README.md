@@ -26,9 +26,8 @@ The installable plugin bundle lives under [`claude/README.md`](./claude/README.m
 ## Install
 
 ```bash
-mkdir -p ~/.codex/plugins
-git clone https://github.com/pejmanjohn/cc-plugin-codex.git ~/.codex/plugins/cc-plugin-codex
-cd ~/.codex/plugins/cc-plugin-codex
+git clone https://github.com/pejmanjohn/cc-plugin-codex.git
+cd cc-plugin-codex
 ./scripts/install.sh
 ```
 
@@ -38,7 +37,7 @@ The installer follows Codex's personal marketplace convention used by `plugin-cr
 - exposes this repo's installable `claude/` bundle at `~/plugins/claude-companion`
 - runs `codex plugin add claude-companion@<personal-marketplace-name>`
 
-No machine-specific paths are committed to the repo. The `~/plugins/claude-companion` path is a local symlink to the checkout's `claude/` bundle, so updates still come from `git pull`.
+You can clone the repo wherever you keep source checkouts. No machine-specific paths are committed to the repo. The `~/plugins/claude-companion` path is a local symlink to the checkout's `claude/` bundle, so updates still come from `git pull`.
 
 ## Verify
 
@@ -61,7 +60,7 @@ After install, you should see the bundled Claude Companion skills in Codex. The 
 ## Update
 
 ```bash
-cd ~/.codex/plugins/cc-plugin-codex
+cd /path/to/cc-plugin-codex
 git pull
 ./scripts/install.sh
 ```
@@ -71,7 +70,7 @@ Start a new Codex thread after reinstalling so the updated skills are loaded.
 ## Uninstall
 
 ```bash
-cd ~/.codex/plugins/cc-plugin-codex
+cd /path/to/cc-plugin-codex
 ./scripts/uninstall.sh
 ```
 
