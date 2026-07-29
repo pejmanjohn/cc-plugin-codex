@@ -119,6 +119,17 @@ The plugin is usable today, but it is not fully functionally equivalent to `open
 
 The missing piece is the automatic stop-time review gate. Codex supports repo-level and user-level hooks, but validated installed-plugin runs still did not execute bundled plugin hooks after official install, so this plugin reports that limitation honestly instead of pretending the gate works.
 
+## Troubleshooting
+
+### Codex blocks `$claude-delegate` as data exfiltration
+
+Codex may refuse to launch the delegate command with a message like "this delegates repository context to an external service". Two things to know:
+
+- **What data goes where.** Delegation runs your locally installed Claude Code CLI under your own Anthropic account. Workspace context is sent to Anthropic's API exactly as if you ran `claude` in your own terminal. There is no third-party or plugin-operated service involved (see [PRIVACY.md](./PRIVACY.md)).
+- **Who decides.** The approval layer belongs to Codex, not to this plugin. The plugin cannot and will not bypass it. If Codex denies the command after you approve it, that is a Codex-side policy decision to raise with OpenAI.
+
+One known aggravator: Codex sometimes invents Claude Code CLI flags — most commonly `--dangerously-skip-permissions` — when composing the command, which makes an ordinary delegation look like a safety bypass to the approval layer. This plugin never uses that flag; the skill instructions now list the supported flags explicitly, and `claude-companion.mjs` rejects unknown flags with an error instead of passing them along. If you see a rejection quoting a flag not documented above, retry the skill — the corrected command usually passes review.
+
 ## Releases
 
 This repo uses simple tag-based releases.

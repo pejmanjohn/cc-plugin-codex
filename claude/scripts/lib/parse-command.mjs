@@ -8,6 +8,8 @@ const BOOLEAN_FLAGS = new Map([
   ['--disable-review-gate', 'disableReviewGate'],
 ]);
 
+const SUPPORTED_FLAGS = [...STRING_FLAGS, ...BOOLEAN_FLAGS.keys()].join(', ');
+
 export function parseCommand(argv) {
   const [command, ...rest] = argv;
 
@@ -31,23 +33,42 @@ export function parseCommand(argv) {
   };
 
   const trailing = [];
+  let inTrailingText = false;
 
   for (let index = 0; index < rest.length; index += 1) {
     const token = rest[index];
 
-    if (STRING_FLAGS.has(token)) {
-      const value = rest[index + 1];
-      if (!value || value.startsWith('--')) {
-        throw new Error(`Missing value for ${token}.`);
+    if (!inTrailingText) {
+      if (token === '--') {
+        inTrailingText = true;
+        continue;
       }
-      flags[token.slice(2)] = value;
-      index += 1;
-      continue;
-    }
 
-    if (BOOLEAN_FLAGS.has(token)) {
-      flags[BOOLEAN_FLAGS.get(token)] = true;
-      continue;
+      if (STRING_FLAGS.has(token)) {
+        const value = rest[index + 1];
+        if (!value || value.startsWith('--')) {
+          throw new Error(`Missing value for ${token}.`);
+        }
+        flags[token.slice(2)] = value;
+        index += 1;
+        continue;
+      }
+
+      if (BOOLEAN_FLAGS.has(token)) {
+        flags[BOOLEAN_FLAGS.get(token)] = true;
+        continue;
+      }
+
+      if (token.startsWith('--')) {
+        throw new Error(
+          `Unknown flag ${token}. Supported flags: ${SUPPORTED_FLAGS}. ` +
+            'Claude Code CLI flags such as --dangerously-skip-permissions are not accepted; ' +
+            'this script manages the Claude Code invocation itself. ' +
+            'Use a bare -- separator before task text that starts with --.',
+        );
+      }
+
+      inTrailingText = true;
     }
 
     trailing.push(token);

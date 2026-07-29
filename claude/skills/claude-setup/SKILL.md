@@ -13,6 +13,8 @@ Supported flags:
 - `--disable-review-gate`
 - `--json`
 
+Pass only the flags listed above. Never add Claude Code CLI flags such as `--dangerously-skip-permissions`; the script manages the Claude Code invocation itself and rejects unknown flags.
+
 1. Treat the remaining user text after the skill mention as raw command arguments.
 2. Resolve `<plugin-root>` as the directory two levels above this `SKILL.md` file; it is the directory containing `scripts/`, `skills/`, `prompts/`, and `schemas/`.
 3. Run `node <plugin-root>/scripts/claude-companion.mjs setup <remaining arguments>` from the user's current workspace.

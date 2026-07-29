@@ -42,4 +42,34 @@ describe('parseCommand', () => {
       }),
     );
   });
+
+  it('rejects unknown flags instead of folding them into the prompt', async () => {
+    const { parseCommand } = await load();
+
+    expect(() => parseCommand(['delegate', '--dangerously-skip-permissions', 'fix the worker'])).toThrow(
+      /Unknown flag --dangerously-skip-permissions\. Supported flags:/,
+    );
+  });
+
+  it('treats flag-like tokens after the task text begins as prose', async () => {
+    const { parseCommand } = await load();
+
+    expect(parseCommand(['delegate', 'fix', 'the', '--json', 'flag', 'output'])).toEqual(
+      expect.objectContaining({
+        flags: expect.objectContaining({ json: false }),
+        trailingText: 'fix the --json flag output',
+      }),
+    );
+  });
+
+  it('supports a bare -- separator for task text that starts with a flag-like token', async () => {
+    const { parseCommand } = await load();
+
+    expect(parseCommand(['delegate', '--model', 'opus', '--', '--verbose is broken'])).toEqual(
+      expect.objectContaining({
+        flags: expect.objectContaining({ model: 'opus' }),
+        trailingText: '--verbose is broken',
+      }),
+    );
+  });
 });
