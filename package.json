@@ -1,6 +1,6 @@
 {
   "name": "cc-plugin-codex",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "description": "Codex-native Claude Companion plugin source repository.",
