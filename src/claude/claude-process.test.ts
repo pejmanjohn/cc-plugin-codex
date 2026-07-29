@@ -47,6 +47,86 @@ describe('claude process invocation', () => {
     },
   );
 
+  it.skipIf(process.platform === 'win32')(
+    'reports readiness from local auth status without spending an API call',
+    async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'claude-process-auth-'));
+      const fakeClaude = join(dir, 'claude');
+      writeFileSync(
+        fakeClaude,
+        [
+          '#!/bin/sh',
+          'if [ "$1" = "auth" ]; then',
+          '  printf \'%s\' \'{"loggedIn":true,"authMethod":"claude.ai","email":"dev@example.com"}\'',
+          '  exit 0',
+          'fi',
+          'echo "prompt probe should not run" >&2',
+          'exit 1',
+        ].join('\n'),
+        'utf8',
+      );
+      chmodSync(fakeClaude, 0o755);
+
+      const { probeClaude } = await load();
+      const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
+      const readiness = await probeClaude('opus', env);
+
+      expect(readiness.ok).toBe(true);
+      expect(readiness.availability).toBe('ready');
+      expect(readiness.message).toContain('claude.ai');
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    'reports signed-out installations with sign-in guidance',
+    async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'claude-process-auth-out-'));
+      const fakeClaude = join(dir, 'claude');
+      writeFileSync(
+        fakeClaude,
+        '#!/bin/sh\nprintf \'%s\' \'{"loggedIn":false}\'\n',
+        'utf8',
+      );
+      chmodSync(fakeClaude, 0o755);
+
+      const { probeClaude } = await load();
+      const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
+      const readiness = await probeClaude('opus', env);
+
+      expect(readiness.ok).toBe(false);
+      expect(readiness.message).toMatch(/not signed in/);
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    'falls back to the live prompt probe when auth status is unsupported',
+    async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'claude-process-auth-old-'));
+      const fakeClaude = join(dir, 'claude');
+      writeFileSync(
+        fakeClaude,
+        [
+          '#!/bin/sh',
+          'if [ "$1" = "auth" ]; then',
+          '  echo "error: unknown command auth" >&2',
+          '  exit 1',
+          'fi',
+          'cat > /dev/null',
+          'printf \'%s\' \'{"is_error":false,"result":"READY","session_id":"abc"}\'',
+        ].join('\n'),
+        'utf8',
+      );
+      chmodSync(fakeClaude, 0o755);
+
+      const { probeClaude } = await load();
+      const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
+      const readiness = await probeClaude('opus', env);
+
+      expect(readiness.ok).toBe(true);
+      expect(readiness.message).toBe('READY');
+    },
+  );
+
   it('appends an update hint when Claude Code rejects a flag it does not know', async () => {
     const { withClaudeVersionHint } = await load();
 

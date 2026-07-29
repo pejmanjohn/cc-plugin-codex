@@ -103,6 +103,8 @@ $claude-setup --model opus --effort high
 
 Claude Code currently accepts effort levels such as `low`, `medium`, `high`, `xhigh`, and `max`. Model values can be aliases such as `sonnet` or `opus`, or full Claude model names supported by your Claude Code installation.
 
+`--resume` continues the most recent delegate thread started from the same Codex conversation (Codex exposes a `CODEX_THREAD_ID` to plugin commands). When no thread id is available, it falls back to the workspace's most recent delegate thread.
+
 `$claude-rescue` remains available as a backwards-compatible alias.
 
 ### `$claude-status`, `$claude-result`, `$claude-cancel`
@@ -111,7 +113,7 @@ Shows running and recent jobs, returns the stored final output, or cancels an ac
 
 ### `$claude-setup`
 
-Checks whether Claude Code is installed and usable, and reports the current stop-time review-gate limitation.
+Checks whether Claude Code is installed and signed in (via local `claude auth status`, no API call; older Claude Code versions fall back to a one-prompt live probe), and reports the current stop-time review-gate limitation.
 
 ## Current Limitation
 

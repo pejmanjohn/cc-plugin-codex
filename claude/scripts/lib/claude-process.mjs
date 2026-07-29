@@ -47,10 +47,10 @@ function spawnClaude(args, env) {
   });
 }
 
-export async function runClaudeJson(prompt, extraArgs = [], env = process.env, hooks = {}) {
+async function runClaudeCommand(args, env, hooks = {}, stdinData = '') {
   const timeoutMs = hooks.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   return await new Promise((resolve) => {
-    const child = spawnClaude(['-p', '--output-format', 'json', ...extraArgs], env);
+    const child = spawnClaude(args, env);
 
     let stdout = '';
     let stderr = '';
@@ -93,13 +93,17 @@ export async function runClaudeJson(prompt, extraArgs = [], env = process.env, h
       finish({ code: null, stdout, stderr, error: timeoutError ?? error });
     });
 
-    // The prompt goes over stdin rather than argv: argv has hard per-argument
+    // Input goes over stdin rather than argv: argv has hard per-argument
     // size limits (~128 KB on Linux) that full review diffs exceed, and stdin
-    // keeps the prompt out of process listings. Ignore stdin errors — if the
+    // keeps prompts out of process listings. Ignore stdin errors — if the
     // child fails to start, the 'error' handler above reports it.
     child.stdin.on('error', () => {});
-    child.stdin.end(prompt);
+    child.stdin.end(stdinData);
   });
+}
+
+export async function runClaudeJson(prompt, extraArgs = [], env = process.env, hooks = {}) {
+  return await runClaudeCommand(['-p', '--output-format', 'json', ...extraArgs], env, hooks, prompt);
 }
 
 export function withClaudeVersionHint(message) {
@@ -132,6 +136,41 @@ function unavailable(message, sessionId) {
 }
 
 export async function probeClaude(defaultModel, env = process.env) {
+  const authResult = await runClaudeCommand(['auth', 'status', '--json'], env, { timeoutMs: 30_000 });
+
+  if (authResult.error) {
+    return unavailable(`Claude Code could not be started: ${authResult.error.message}`, undefined);
+  }
+
+  let auth = null;
+  try {
+    auth = JSON.parse(authResult.stdout.trim());
+  } catch {
+    auth = null;
+  }
+
+  if (auth && typeof auth.loggedIn === 'boolean') {
+    if (!auth.loggedIn) {
+      return unavailable(
+        'Claude Code is installed but not signed in. Run `claude` in a terminal, sign in, and retry.',
+        undefined,
+      );
+    }
+
+    return {
+      ok: true,
+      availability: 'ready',
+      message: `Signed in${auth.authMethod ? ` via ${auth.authMethod}` : ''}${auth.email ? ` as ${auth.email}` : ''}.`,
+      sessionId: undefined,
+    };
+  }
+
+  // Older Claude Code versions without `auth status --json`: fall back to a
+  // live prompt probe, which costs one small API call.
+  return await probeClaudeWithPrompt(defaultModel, env);
+}
+
+async function probeClaudeWithPrompt(defaultModel, env) {
   const commandResult = await runClaudeJson('Reply with READY.', ['--model', defaultModel], env, {
     timeoutMs: 2 * 60 * 1000,
   });

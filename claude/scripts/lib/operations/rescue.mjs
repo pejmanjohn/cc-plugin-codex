@@ -25,26 +25,31 @@ function isDelegationJob(job) {
     job.sessionId.length > 0;
 }
 
-function latestRescueJob(jobs) {
+function matchesCodexThread(job, codexThreadId) {
+  return codexThreadId == null || job.threadId === codexThreadId;
+}
+
+function latestRescueJob(jobs, codexThreadId = null) {
   return [...jobs]
     .filter(isDelegationJob)
+    .filter((job) => matchesCodexThread(job, codexThreadId))
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
 
-export function selectRescueSession(jobs, flags) {
+export function selectRescueSession(jobs, flags, codexThreadId = null) {
   if (flags.fresh || !flags.resume) {
     return null;
   }
 
-  return latestRescueJob(jobs)?.sessionId ?? null;
+  return latestRescueJob(jobs, codexThreadId)?.sessionId ?? null;
 }
 
-export function buildResumeHint(jobs, flags) {
+export function buildResumeHint(jobs, flags, codexThreadId = null) {
   if (flags.resume || flags.fresh) {
     return null;
   }
 
-  if (!latestRescueJob(jobs)) {
+  if (!latestRescueJob(jobs, codexThreadId)) {
     return null;
   }
 
@@ -120,8 +125,12 @@ export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.en
 
 export async function runRescue(parsed, deps) {
   const jobs = await deps.listJobs(deps.stateRoot, deps.workspaceRoot);
-  const sessionId = selectRescueSession(jobs, parsed.flags);
-  const resumeHint = buildResumeHint(jobs, parsed.flags);
+  // Codex injects CODEX_THREAD_ID into shell tool environments; scoping
+  // implicit --resume to it keeps two Codex conversations on the same
+  // workspace from silently continuing each other's delegate threads.
+  const codexThreadId = deps.env?.CODEX_THREAD_ID ?? null;
+  const sessionId = selectRescueSession(jobs, parsed.flags, codexThreadId);
+  const resumeHint = buildResumeHint(jobs, parsed.flags, codexThreadId);
   const jobKind = parsed.command === 'rescue' ? 'rescue' : 'delegate';
   const job = await deps.createJob(deps.stateRoot, deps.workspaceRoot, {
     kind: jobKind,
@@ -130,6 +139,7 @@ export async function runRescue(parsed, deps) {
     status: parsed.flags.background ? 'queued' : 'running',
     phase: parsed.flags.background ? 'queued' : 'running',
     sessionId,
+    threadId: codexThreadId,
   });
 
   if (parsed.flags.background) {

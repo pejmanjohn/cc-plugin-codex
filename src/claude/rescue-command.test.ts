@@ -186,6 +186,70 @@ describe('rescue operation', () => {
     expect(session).toBe('session-8');
   });
 
+  it('scopes implicit --resume to the current Codex thread when a thread id is available', async () => {
+    const { selectRescueSession } = await loadRescue();
+    const jobs = [
+      {
+        id: 'job-other',
+        kind: 'delegate',
+        sessionId: 'session-other-window',
+        threadId: 'codex-thread-other',
+        createdAt: '2026-07-29T02:00:00.000Z',
+      },
+      {
+        id: 'job-mine',
+        kind: 'delegate',
+        sessionId: 'session-mine',
+        threadId: 'codex-thread-mine',
+        createdAt: '2026-07-29T01:00:00.000Z',
+      },
+    ];
+
+    expect(selectRescueSession(jobs, { resume: true, fresh: false }, 'codex-thread-mine')).toBe('session-mine');
+    expect(selectRescueSession(jobs, { resume: true, fresh: false }, 'codex-thread-unknown')).toBeNull();
+    expect(selectRescueSession(jobs, { resume: true, fresh: false }, null)).toBe('session-other-window');
+  });
+
+  it('records the Codex thread id on new delegate jobs when the environment provides one', async () => {
+    const { runRescue } = await loadRescue();
+    const createJob = vi.fn(async (_root, _workspaceRoot, job) => ({ id: 'job-1', ...job }));
+
+    await runRescue(
+      {
+        command: 'delegate',
+        flags: {
+          background: false,
+          resume: false,
+          fresh: false,
+          model: undefined,
+          effort: undefined,
+        },
+        trailingText: 'scoped task',
+      },
+      {
+        stateRoot: '/state',
+        workspaceRoot: '/repo/example',
+        config: { defaultModel: 'opus', defaultEffort: 'high' },
+        env: { CODEX_THREAD_ID: 'codex-thread-123' },
+        createJob,
+        updateJob: vi.fn(async (_root, _workspaceRoot, _jobId, patch) => ({ id: 'job-1', ...patch })),
+        listJobs: vi.fn(async () => []),
+        runRescueCore: vi.fn(async () => ({
+          sessionId: 'session-new',
+          rawOutput: 'Done',
+          parsedPayload: { summary: 'Done' },
+          renderedOutput: 'Done',
+        })),
+      },
+    );
+
+    expect(createJob).toHaveBeenCalledWith(
+      '/state',
+      '/repo/example',
+      expect.objectContaining({ threadId: 'codex-thread-123' }),
+    );
+  });
+
   it('surfaces a concise resume hint when a prior rescue session exists and no routing flag is passed', async () => {
     const { runRescue } = await loadRescue();
     const runRescueCore = vi.fn(async () => ({
