@@ -24,7 +24,7 @@ export async function runSetup(parsed, deps) {
       : undefined;
 
   const outputLines = [
-    `Claude readiness: ${readiness.status ?? readiness.availability}`,
+    `Claude readiness: ${readiness.availability}`,
     `Message: ${readiness.message}`,
   ];
 

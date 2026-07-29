@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -98,6 +99,55 @@ describe('jobs operations', () => {
     expect(stored.completedAt).not.toBeNull();
     expect(stored.pid).toBeNull();
     killSpy.mockRestore();
+  });
+
+  it('reports a still-running job honestly from runResult', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
+    const { createJob } = await loadStore();
+    const { runResult } = await loadJobs();
+
+    const job = await createJob(root, '/repo/example', {
+      kind: 'delegate',
+      title: 'Background delegate',
+      summary: 'In flight',
+      status: 'running',
+      phase: 'running',
+      pid: process.pid,
+    });
+
+    const result = await runResult(
+      { flags: { json: false, job: job.id } },
+      { stateRoot: root, workspaceRoot: '/repo/example' },
+    );
+
+    expect(result.output).toContain('still running');
+    expect(result.output).toContain(job.id);
+  });
+
+  it('marks running jobs whose worker died as failed during status', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
+    const { createJob, readJob } = await loadStore();
+    const { runStatus } = await loadJobs();
+    const deadPid = spawnSync(process.execPath, ['-e', '']).pid;
+
+    const job = await createJob(root, '/repo/example', {
+      kind: 'delegate',
+      title: 'Crashed background delegate',
+      summary: 'Worker vanished',
+      status: 'running',
+      phase: 'running',
+      pid: deadPid,
+    });
+
+    const status = await runStatus(
+      { flags: { json: false } },
+      { stateRoot: root, workspaceRoot: '/repo/example' },
+    );
+    const stored = await readJob(root, '/repo/example', job.id);
+
+    expect(status.output).toContain('failed');
+    expect(stored.status).toBe('failed');
+    expect(stored.error?.message).toMatch(/no longer running/);
   });
 
   it.skipIf(process.platform === 'win32')(

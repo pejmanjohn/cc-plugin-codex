@@ -96,7 +96,7 @@ export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.en
   );
 
   if (commandResult.error) {
-    throw new Error(`Claude delegation could not be started: ${commandResult.error.message}`);
+    throw new Error(`Claude delegation failed: ${commandResult.error.message}`);
   }
 
   if (commandResult.stdout.trim() === '') {

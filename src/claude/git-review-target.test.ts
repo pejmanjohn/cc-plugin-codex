@@ -28,6 +28,17 @@ describe('review target resolution', () => {
     expect(target.kind).toBe('worktree');
   });
 
+  it('rejects --base when the worktree has uncommitted changes', async () => {
+    const root = initRepo();
+    writeFileSync(join(root, 'README.md'), '# repo\nchanged\n', 'utf8');
+
+    const { resolveReviewTarget } = await load();
+
+    await expect(resolveReviewTarget(root, { base: 'main' })).rejects.toThrow(
+      /Uncommitted changes present/,
+    );
+  });
+
   it('includes untracked file contents that git diff omits', async () => {
     const root = initRepo();
     writeFileSync(join(root, 'brand-new.mjs'), 'export const answer = 42;\n', 'utf8');

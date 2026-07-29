@@ -9,6 +9,7 @@ Supported flags:
 
 - `--base <ref>`
 - `--model <alias>`
+- `--effort <level>`
 - `--json`
 
 Pass only the flags listed above, placed before any review focus text. Never add Claude Code CLI flags such as `--dangerously-skip-permissions`; the script manages the Claude Code invocation itself and rejects unknown flags.

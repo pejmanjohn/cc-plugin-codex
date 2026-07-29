@@ -21,9 +21,19 @@ function printLine(value) {
   process.stdout.write(value.endsWith('\n') ? value : `${value}\n`);
 }
 
-async function runClaudeReview({ prompt, context, model }) {
+async function runClaudeReview({ prompt, context, model, effort }) {
   const schema = await readFile(pluginPath('schemas', 'review-findings.schema.json'), 'utf8');
-  const commandResult = await runClaudeJson(`${prompt}\n\n${context}`, ['--model', model, '--json-schema', schema], process.env);
+  const args = ['--model', model, '--json-schema', schema];
+  if (effort) {
+    args.push('--effort', effort);
+  }
+  const commandResult = await runClaudeJson(`${prompt}\n\n${context}`, args, process.env);
+  if (commandResult.error) {
+    throw new Error(`Claude review failed: ${commandResult.error.message}`);
+  }
+  if (commandResult.stdout.trim() === '') {
+    throw new Error(commandResult.stderr.trim() || 'Claude review returned no output.');
+  }
   const envelope = parseClaudeEnvelope(commandResult.stdout);
   if (envelope.isError) {
     throw new Error(envelope.result);

@@ -90,6 +90,12 @@ export async function resolveReviewTarget(cwd, flags) {
   const branch = await runGit(cwd, ['branch', '--show-current']);
 
   if (statusText.trim() !== '') {
+    if (flags.base) {
+      throw new Error(
+        'Uncommitted changes present: --base compares committed history, so the worktree changes would be ignored. Commit or stash them first, or rerun without --base to review the worktree.',
+      );
+    }
+
     const diffText = await runGit(cwd, ['diff', '--no-ext-diff', 'HEAD', '--']);
     const untrackedText = await buildUntrackedSection(cwd);
     return {

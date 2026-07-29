@@ -31,6 +31,23 @@ describe('claude process invocation', () => {
   );
 
   it.skipIf(process.platform === 'win32')(
+    'terminates runs that exceed the timeout and reports the timeout as the error',
+    async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'claude-process-slow-'));
+      const fakeClaude = join(dir, 'claude');
+      writeFileSync(fakeClaude, '#!/bin/sh\nsleep 30\n', 'utf8');
+      chmodSync(fakeClaude, 0o755);
+
+      const { runClaudeJson } = await load();
+      const env = { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}` };
+
+      const result = await runClaudeJson('hello', [], env, { timeoutMs: 300 });
+
+      expect(result.error?.message).toMatch(/timed out/);
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
     'resolves with an error instead of hanging when claude cannot be spawned',
     async () => {
       const emptyDir = mkdtempSync(join(tmpdir(), 'claude-process-empty-'));

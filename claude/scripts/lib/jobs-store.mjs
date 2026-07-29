@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { basename, dirname, isAbsolute, join } from 'node:path';
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 
 const RECENT_JOB_LIMIT = 20;
 const TERMINAL_STATUSES = new Set(['completed', 'cancelled', 'failed']);
@@ -60,6 +60,45 @@ async function updateRecentJobsIndex(stateRoot, workspaceRoot, jobId) {
   const current = await readRecentJobIds(stateRoot, workspaceRoot);
   const next = [jobId, ...current.filter((entry) => entry !== jobId)];
   await writeRecentJobIds(stateRoot, workspaceRoot, next);
+  await pruneUnindexedJobs(stateRoot, workspaceRoot, next.slice(0, RECENT_JOB_LIMIT));
+}
+
+async function pruneUnindexedJobs(stateRoot, workspaceRoot, keepIds) {
+  const keep = new Set(keepIds);
+  const jobsDir = join(workspaceDir(stateRoot, workspaceRoot), 'jobs');
+  const logsDir = join(workspaceDir(stateRoot, workspaceRoot), 'logs');
+
+  let entries;
+  try {
+    entries = await readdir(jobsDir);
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (!entry.endsWith('.json')) {
+      continue;
+    }
+
+    const jobId = entry.slice(0, -'.json'.length);
+    if (keep.has(jobId)) {
+      continue;
+    }
+
+    try {
+      const job = JSON.parse(await readFile(join(jobsDir, entry), 'utf8'));
+      // Never delete a job that may still have a live worker attached, even
+      // if it has fallen off the recent index.
+      if (!TERMINAL_STATUSES.has(job.status)) {
+        continue;
+      }
+    } catch {
+      // Unreadable job files are stale garbage; fall through and delete.
+    }
+
+    await rm(join(jobsDir, entry), { force: true });
+    await rm(join(logsDir, `${jobId}.log`), { force: true });
+  }
 }
 
 export async function createJob(stateRoot, workspaceRoot, partial) {
@@ -76,6 +115,7 @@ export async function createJob(stateRoot, workspaceRoot, partial) {
     updatedAt: now,
     completedAt: partial.completedAt ?? null,
     pid: partial.pid ?? null,
+    processGroupId: partial.processGroupId ?? null,
     sessionId: partial.sessionId ?? null,
     threadId: partial.threadId ?? null,
     renderedOutput: partial.renderedOutput ?? null,
@@ -83,7 +123,6 @@ export async function createJob(stateRoot, workspaceRoot, partial) {
     rawOutput: partial.rawOutput ?? null,
     error: partial.error ?? null,
     logFilePath: partial.logFilePath ?? null,
-    ...partial,
   };
 
   const path = jobFile(stateRoot, workspaceRoot, job.id);

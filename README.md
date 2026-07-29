@@ -72,7 +72,7 @@ The first command removes the installed plugin. The second removes the GitHub ma
 
 ### `$claude-review`
 
-Runs a normal read-only Claude review on your current work or against a base ref.
+Runs a normal read-only Claude review on your current work or against a base ref. Supports `--base <ref>`, `--model <alias>`, and `--effort <level>`. Reviews cover uncommitted changes including untracked files; `--base` requires a clean worktree because it compares committed history.
 
 ### `$claude-adversarial-review`
 

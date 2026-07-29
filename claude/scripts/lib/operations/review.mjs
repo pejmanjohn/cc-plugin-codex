@@ -45,6 +45,7 @@ export async function runReview(parsed, deps) {
       prompt,
       context,
       model: parsed.flags.model ?? deps.config.defaultModel,
+      effort: parsed.flags.effort ?? deps.config.defaultEffort,
     });
 
     const renderedOutput = deps.renderReviewOutput(reviewResult.parsedPayload);

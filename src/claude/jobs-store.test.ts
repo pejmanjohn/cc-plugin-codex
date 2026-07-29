@@ -74,6 +74,66 @@ describe('jobs store', () => {
     expect(jobs[0].title).toBe('Review current diff');
   });
 
+  it('prunes terminal job files and logs that fall off the recent index', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
+    const { createJob } = await load();
+
+    const first = await createJob(root, '/repo/example', {
+      kind: 'delegate',
+      title: 'Oldest job',
+      summary: 'Should be pruned',
+      status: 'completed',
+      phase: 'completed',
+    });
+
+    const workspaceDir = join(root, 'workspaces', readdirSync(join(root, 'workspaces'))[0]);
+    const logsDir = join(workspaceDir, 'logs');
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(join(logsDir, `${first.id}.log`), 'old log output', 'utf8');
+
+    for (let index = 0; index < 20; index += 1) {
+      await createJob(root, '/repo/example', {
+        kind: 'delegate',
+        title: `Job ${index}`,
+        summary: 'Filler',
+        status: 'completed',
+        phase: 'completed',
+      });
+    }
+
+    const jobFiles = readdirSync(join(workspaceDir, 'jobs'));
+    expect(jobFiles).toHaveLength(20);
+    expect(jobFiles).not.toContain(`${first.id}.json`);
+    expect(readdirSync(logsDir)).not.toContain(`${first.id}.log`);
+  });
+
+  it('never prunes non-terminal jobs even when they fall off the recent index', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
+    const { createJob } = await load();
+
+    const running = await createJob(root, '/repo/example', {
+      kind: 'delegate',
+      title: 'Long-running job',
+      summary: 'Still has a live worker',
+      status: 'running',
+      phase: 'running',
+      pid: 43212,
+    });
+
+    for (let index = 0; index < 21; index += 1) {
+      await createJob(root, '/repo/example', {
+        kind: 'delegate',
+        title: `Job ${index}`,
+        summary: 'Filler',
+        status: 'completed',
+        phase: 'completed',
+      });
+    }
+
+    const workspaceDir = join(root, 'workspaces', readdirSync(join(root, 'workspaces'))[0]);
+    expect(readdirSync(join(workspaceDir, 'jobs'))).toContain(`${running.id}.json`);
+  });
+
   it('reclaims a stale lock directory before updating a job', async () => {
     const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
     const { createJob, readJob, updateJob } = await load();

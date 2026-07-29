@@ -39,8 +39,34 @@ function terminateJob(job) {
   }
 }
 
+function isProcessAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+async function reconcileDeadWorker(deps, job) {
+  if (job.status !== 'running' || !job.pid || isProcessAlive(job.pid)) {
+    return job;
+  }
+
+  return await updateJob(deps.stateRoot, deps.workspaceRoot, job.id, {
+    status: 'failed',
+    phase: 'failed',
+    pid: null,
+    processGroupId: null,
+    error: {
+      message: 'Background worker process is no longer running; the job was marked failed during status reconciliation.',
+    },
+  });
+}
+
 export async function runStatus(parsed, deps) {
-  const jobs = await listJobs(deps.stateRoot, deps.workspaceRoot);
+  const storedJobs = await listJobs(deps.stateRoot, deps.workspaceRoot);
+  const jobs = await Promise.all(storedJobs.map((job) => reconcileDeadWorker(deps, job)));
   const output =
     jobs.length === 0
       ? 'No Claude Companion jobs recorded for this workspace.'
@@ -54,7 +80,22 @@ export async function runResult(parsed, deps) {
     throw new Error('result requires --job <id>.');
   }
 
-  const job = await readJob(deps.stateRoot, deps.workspaceRoot, parsed.flags.job);
+  const stored = await readJob(deps.stateRoot, deps.workspaceRoot, parsed.flags.job);
+  const job = await reconcileDeadWorker(deps, stored);
+
+  if (job.status === 'running' || job.status === 'queued') {
+    return {
+      job,
+      output: `Job ${job.id} is still ${job.status}. Check again shortly, or cancel it with $claude-cancel --job ${job.id}.`,
+    };
+  }
+
+  if (job.status === 'failed') {
+    return {
+      job,
+      output: `Job ${job.id} failed: ${job.error?.message ?? 'unknown error'}`,
+    };
+  }
 
   return {
     job,

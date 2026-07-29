@@ -1,4 +1,25 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
+
+function formatDuration(ms) {
+  return ms >= 60_000 ? `${Math.round(ms / 60_000)} minutes` : `${Math.round(ms / 1000)} seconds`;
+}
+
+function killClaude(child) {
+  if (process.platform === 'win32') {
+    if (child.pid) {
+      // Kill the whole tree: with shell:true, child.kill would only
+      // terminate the wrapping shell and leave claude running.
+      spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
+    }
+    return;
+  }
+
+  child.kill('SIGTERM');
+  const forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 5000);
+  forceKillTimer.unref?.();
+}
 
 function quoteWindowsArg(arg) {
   if (/^[\w@%+=:,./-]+$/.test(arg)) {
@@ -27,18 +48,29 @@ function spawnClaude(args, env) {
 }
 
 export async function runClaudeJson(prompt, extraArgs = [], env = process.env, hooks = {}) {
+  const timeoutMs = hooks.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   return await new Promise((resolve) => {
     const child = spawnClaude(['-p', '--output-format', 'json', ...extraArgs], env);
 
     let stdout = '';
     let stderr = '';
     let settled = false;
+    let timeoutError;
+
+    const timeoutTimer = setTimeout(() => {
+      timeoutError = new Error(
+        `Claude Code run timed out after ${formatDuration(timeoutMs)} and was terminated.`,
+      );
+      killClaude(child);
+    }, timeoutMs);
+    timeoutTimer.unref?.();
 
     const finish = (result) => {
       if (settled) {
         return;
       }
       settled = true;
+      clearTimeout(timeoutTimer);
       resolve(result);
     };
 
@@ -54,11 +86,11 @@ export async function runClaudeJson(prompt, extraArgs = [], env = process.env, h
     });
 
     child.on('close', (code) => {
-      finish({ code, stdout, stderr });
+      finish({ code, stdout, stderr, error: timeoutError });
     });
 
     child.on('error', (error) => {
-      finish({ code: null, stdout, stderr, error });
+      finish({ code: null, stdout, stderr, error: timeoutError ?? error });
     });
 
     // The prompt goes over stdin rather than argv: argv has hard per-argument
@@ -93,7 +125,9 @@ function unavailable(message, sessionId) {
 }
 
 export async function probeClaude(defaultModel, env = process.env) {
-  const commandResult = await runClaudeJson('Reply with READY.', ['--model', defaultModel], env);
+  const commandResult = await runClaudeJson('Reply with READY.', ['--model', defaultModel], env, {
+    timeoutMs: 2 * 60 * 1000,
+  });
 
   if (commandResult.error) {
     return unavailable(
