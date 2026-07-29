@@ -47,6 +47,13 @@ describe('claude process invocation', () => {
     },
   );
 
+  it('appends an update hint when Claude Code rejects a flag it does not know', async () => {
+    const { withClaudeVersionHint } = await load();
+
+    expect(withClaudeVersionHint("error: unknown option '--effort'")).toMatch(/Update Claude Code/);
+    expect(withClaudeVersionHint('API rate limit reached')).toBe('API rate limit reached');
+  });
+
   it.skipIf(process.platform === 'win32')(
     'resolves with an error instead of hanging when claude cannot be spawned',
     async () => {

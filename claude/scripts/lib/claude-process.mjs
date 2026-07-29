@@ -102,6 +102,13 @@ export async function runClaudeJson(prompt, extraArgs = [], env = process.env, h
   });
 }
 
+export function withClaudeVersionHint(message) {
+  if (/unknown or unexpected option|unknown option|unrecognized option/i.test(message)) {
+    return `${message}\nYour installed Claude Code likely predates a flag this plugin relies on (such as --effort or --json-schema). Update Claude Code and retry.`;
+  }
+  return message;
+}
+
 export function parseClaudeEnvelope(stdout) {
   const parsed = JSON.parse(stdout);
   return {
@@ -140,7 +147,7 @@ export async function probeClaude(defaultModel, env = process.env) {
   const stderr = commandResult.stderr.trim();
 
   if (commandResult.code !== 0 && stdout === '') {
-    return unavailable(stderr || 'Claude Code failed before returning JSON.', undefined);
+    return unavailable(withClaudeVersionHint(stderr) || 'Claude Code failed before returning JSON.', undefined);
   }
 
   if (stdout === '') {

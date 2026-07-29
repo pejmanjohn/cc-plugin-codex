@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { parseCommand } from './lib/parse-command.mjs';
 import { loadRuntimeConfig, saveRuntimeConfig, getStateRoot } from './lib/runtime-config.mjs';
-import { probeClaude, runClaudeJson, parseClaudeEnvelope } from './lib/claude-process.mjs';
+import { probeClaude, runClaudeJson, parseClaudeEnvelope, withClaudeVersionHint } from './lib/claude-process.mjs';
 import { runSetup } from './lib/operations/setup.mjs';
 import { runStatus, runResult, runCancel } from './lib/operations/jobs.mjs';
 import { runReview } from './lib/operations/review.mjs';
@@ -32,7 +32,7 @@ async function runClaudeReview({ prompt, context, model, effort }) {
     throw new Error(`Claude review failed: ${commandResult.error.message}`);
   }
   if (commandResult.stdout.trim() === '') {
-    throw new Error(commandResult.stderr.trim() || 'Claude review returned no output.');
+    throw new Error(withClaudeVersionHint(commandResult.stderr.trim()) || 'Claude review returned no output.');
   }
   const envelope = parseClaudeEnvelope(commandResult.stdout);
   if (envelope.isError) {

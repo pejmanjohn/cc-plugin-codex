@@ -1,6 +1,6 @@
 import process from 'node:process';
 import { readFile } from 'node:fs/promises';
-import { parseClaudeEnvelope, runClaudeJson } from '../claude-process.mjs';
+import { parseClaudeEnvelope, runClaudeJson, withClaudeVersionHint } from '../claude-process.mjs';
 import { getJobLogFilePath, readJob, updateJob } from '../jobs-store.mjs';
 import { pluginPath } from '../plugin-paths.mjs';
 import { DEFAULT_EFFORT, DEFAULT_MODEL } from '../runtime-config.mjs';
@@ -100,7 +100,9 @@ export async function runRescueCore(parsed, sessionId, runtimeOrEnv = process.en
   }
 
   if (commandResult.stdout.trim() === '') {
-    throw new Error(commandResult.stderr.trim() || 'Claude delegation returned no JSON output.');
+    throw new Error(
+      withClaudeVersionHint(commandResult.stderr.trim()) || 'Claude delegation returned no JSON output.',
+    );
   }
 
   const envelope = parseClaudeEnvelope(commandResult.stdout);
