@@ -1,4 +1,9 @@
 import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+const MAX_UNTRACKED_FILE_BYTES = 65_536;
+const MAX_UNTRACKED_TOTAL_BYTES = 262_144;
 
 function runGit(cwd, args) {
   return new Promise((resolve, reject) => {
@@ -14,6 +19,10 @@ function runGit(cwd, args) {
       stderr += String(chunk);
     });
 
+    child.on('error', (error) => {
+      reject(new Error(`git could not be started: ${error.message}`));
+    });
+
     child.on('close', (code) => {
       if (code === 0) {
         resolve(stdout.trimEnd());
@@ -23,6 +32,44 @@ function runGit(cwd, args) {
       reject(new Error(stderr.trim() || `git ${args.join(' ')} failed`));
     });
   });
+}
+
+async function buildUntrackedSection(cwd) {
+  const raw = await runGit(cwd, ['ls-files', '--others', '--exclude-standard']);
+  const paths = raw.split('\n').filter(Boolean);
+  if (paths.length === 0) {
+    return '';
+  }
+
+  const sections = [];
+  let totalBytes = 0;
+
+  for (const relPath of paths) {
+    try {
+      const buffer = await readFile(join(cwd, relPath));
+
+      if (buffer.subarray(0, 8192).includes(0)) {
+        sections.push(`--- untracked (binary, omitted): ${relPath} (${buffer.length} bytes) ---`);
+        continue;
+      }
+
+      if (totalBytes >= MAX_UNTRACKED_TOTAL_BYTES) {
+        sections.push(`--- untracked (omitted, size budget reached): ${relPath} (${buffer.length} bytes) ---`);
+        continue;
+      }
+
+      const truncated = buffer.length > MAX_UNTRACKED_FILE_BYTES;
+      const text = buffer.subarray(0, MAX_UNTRACKED_FILE_BYTES).toString('utf8');
+      totalBytes += Math.min(buffer.length, MAX_UNTRACKED_FILE_BYTES);
+      sections.push(
+        `--- untracked: ${relPath} ---\n${text}${truncated ? '\n[truncated]' : ''}`,
+      );
+    } catch {
+      sections.push(`--- untracked (unreadable, omitted): ${relPath} ---`);
+    }
+  }
+
+  return `Untracked files (full contents; git diff does not include these):\n${sections.join('\n')}`;
 }
 
 async function detectBaseBranch(cwd) {
@@ -44,11 +91,12 @@ export async function resolveReviewTarget(cwd, flags) {
 
   if (statusText.trim() !== '') {
     const diffText = await runGit(cwd, ['diff', '--no-ext-diff', 'HEAD', '--']);
+    const untrackedText = await buildUntrackedSection(cwd);
     return {
       kind: 'worktree',
       branch,
       statusText,
-      diffText,
+      diffText: untrackedText ? `${diffText}\n\n${untrackedText}` : diffText,
     };
   }
 

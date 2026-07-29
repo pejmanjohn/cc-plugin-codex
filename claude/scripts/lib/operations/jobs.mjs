@@ -1,4 +1,5 @@
 import process from 'node:process';
+import { spawnSync } from 'node:child_process';
 import { listJobs, readJob, updateJob } from '../jobs-store.mjs';
 
 function isMissingProcess(error) {
@@ -6,19 +7,35 @@ function isMissingProcess(error) {
 }
 
 function terminateJob(job) {
-  if (job.processGroupId && process.platform !== 'win32') {
+  if (process.platform === 'win32') {
+    if (job.pid) {
+      // process.kill on Windows cannot signal a process group, which would
+      // orphan the claude child; taskkill /t terminates the whole tree.
+      // A non-zero exit means the process is already gone, which is fine.
+      spawnSync('taskkill', ['/pid', String(job.pid), '/t', '/f'], { stdio: 'ignore' });
+    }
+    return;
+  }
+
+  if (job.processGroupId) {
     try {
       process.kill(-job.processGroupId, 'SIGTERM');
       return;
     } catch (error) {
-      if (!job.pid || !isMissingProcess(error)) {
+      if (!isMissingProcess(error)) {
         throw error;
       }
     }
   }
 
   if (job.pid) {
-    process.kill(job.pid, 'SIGTERM');
+    try {
+      process.kill(job.pid, 'SIGTERM');
+    } catch (error) {
+      if (!isMissingProcess(error)) {
+        throw error;
+      }
+    }
   }
 }
 

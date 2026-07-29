@@ -100,6 +100,40 @@ describe('jobs operations', () => {
     killSpy.mockRestore();
   });
 
+  it.skipIf(process.platform === 'win32')(
+    'cancels a job whose process already exited instead of crashing on ESRCH',
+    async () => {
+      const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
+      const { createJob, readJob } = await loadStore();
+      const { runCancel } = await loadJobs();
+      const esrch = Object.assign(new Error('kill ESRCH'), { code: 'ESRCH' });
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => {
+        throw esrch;
+      });
+
+      const job = await createJob(root, '/repo/example', {
+        kind: 'delegate',
+        title: 'Crashed background delegate',
+        summary: 'Worker died without updating the job',
+        status: 'running',
+        phase: 'running',
+        pid: 43211,
+        processGroupId: 43211,
+      });
+
+      const result = await runCancel(
+        { flags: { json: false, job: job.id } },
+        { stateRoot: root, workspaceRoot: '/repo/example' },
+      );
+      const stored = await readJob(root, '/repo/example', job.id);
+
+      expect(result.output).toContain(job.id);
+      expect(stored.status).toBe('cancelled');
+      expect(stored.phase).toBe('cancelled');
+      killSpy.mockRestore();
+    },
+  );
+
   it('refuses to cancel an already-terminal job without overwriting its state', async () => {
     const root = mkdtempSync(join(tmpdir(), 'claude-companion-jobs-'));
     const { createJob, readJob } = await loadStore();

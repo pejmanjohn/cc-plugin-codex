@@ -1,11 +1,34 @@
 import { spawn } from 'node:child_process';
 
+function quoteWindowsArg(arg) {
+  if (/^[\w@%+=:,./-]+$/.test(arg)) {
+    return arg;
+  }
+
+  return `"${arg.replace(/"/g, '\\"')}"`;
+}
+
+function spawnClaude(args, env) {
+  // npm installs Claude Code on Windows as a claude.cmd shim, which Node
+  // refuses to spawn directly (EINVAL) unless a shell is used. With a shell,
+  // Node joins the arguments verbatim, so each one must be quoted here.
+  if (process.platform === 'win32') {
+    return spawn('claude', args.map(quoteWindowsArg), {
+      env,
+      shell: true,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  }
+
+  return spawn('claude', args, {
+    env,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+}
+
 export async function runClaudeJson(prompt, extraArgs = [], env = process.env, hooks = {}) {
   return await new Promise((resolve) => {
-    const child = spawn('claude', ['-p', '--output-format', 'json', ...extraArgs, prompt], {
-      env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const child = spawnClaude(['-p', '--output-format', 'json', ...extraArgs], env);
 
     let stdout = '';
     let stderr = '';
@@ -37,6 +60,13 @@ export async function runClaudeJson(prompt, extraArgs = [], env = process.env, h
     child.on('error', (error) => {
       finish({ code: null, stdout, stderr, error });
     });
+
+    // The prompt goes over stdin rather than argv: argv has hard per-argument
+    // size limits (~128 KB on Linux) that full review diffs exceed, and stdin
+    // keeps the prompt out of process listings. Ignore stdin errors — if the
+    // child fails to start, the 'error' handler above reports it.
+    child.stdin.on('error', () => {});
+    child.stdin.end(prompt);
   });
 }
 

@@ -27,4 +27,27 @@ describe('review target resolution', () => {
 
     expect(target.kind).toBe('worktree');
   });
+
+  it('includes untracked file contents that git diff omits', async () => {
+    const root = initRepo();
+    writeFileSync(join(root, 'brand-new.mjs'), 'export const answer = 42;\n', 'utf8');
+
+    const { resolveReviewTarget } = await load();
+    const target = await resolveReviewTarget(root, { base: undefined });
+
+    expect(target.kind).toBe('worktree');
+    expect(target.diffText).toContain('untracked: brand-new.mjs');
+    expect(target.diffText).toContain('export const answer = 42;');
+  });
+
+  it('omits binary untracked files from the review context', async () => {
+    const root = initRepo();
+    writeFileSync(join(root, 'blob.bin'), Buffer.from([0x89, 0x00, 0x50, 0x4e, 0x47]));
+
+    const { resolveReviewTarget } = await load();
+    const target = await resolveReviewTarget(root, { base: undefined });
+
+    expect(target.diffText).toContain('untracked (binary, omitted): blob.bin');
+    expect(target.diffText).not.toContain('\u0000');
+  });
 });
